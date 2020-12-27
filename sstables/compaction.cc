@@ -126,8 +126,8 @@ static std::vector<shared_sstable> get_uncompacting_sstables(column_family& cf, 
 class compaction;
 
 struct compaction_writer {
-    sstable_writer writer;
     shared_sstable sst;
+    sstable_writer writer;
 };
 
 class compacting_sstable_writer {
@@ -786,7 +786,7 @@ public:
         cfg.max_sstable_size = _max_sstable_size;
         cfg.monitor = &_active_write_monitors.back();
         cfg.run_identifier = _run_identifier;
-        return compaction_writer{sst->get_writer(*_schema, partitions_per_sstable(), cfg, get_encoding_stats(), priority), sst};
+        return compaction_writer{sst, sst->get_writer(*_schema, partitions_per_sstable(), cfg, get_encoding_stats(), priority)};
     }
 
     virtual void stop_sstable_writer(compaction_writer* writer) override {
@@ -1268,7 +1268,7 @@ public:
         // sstables generated for a given shard will share the same run identifier.
         cfg.run_identifier = _run_identifiers.at(shard);
         auto&& priority = service::get_local_compaction_priority();
-        return compaction_writer{sst->get_writer(*_schema, partitions_per_sstable(shard), cfg, get_encoding_stats(), priority, shard), sst};
+        return compaction_writer{sst, sst->get_writer(*_schema, partitions_per_sstable(shard), cfg, get_encoding_stats(), priority, shard)};
     }
 
     void on_new_partition() override {}
